@@ -1,0 +1,323 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Love Game</title>
+  <style>
+    :root {
+      --pink: #ff5c8a;
+      --rose: #ff93b3;
+      --lavender: #c17bff;
+      --white: #ffffff;
+      --shadow: rgba(0, 0, 0, 0.18);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Poppins', Arial, sans-serif;
+      background: radial-gradient(circle at top left, #ffcbdf 0%, #ff9a9e 40%, #f5e3ff 100%);
+      overflow: hidden;
+      color: #3b1f2b;
+    }
+
+    .heart {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      background: var(--pink);
+      transform: rotate(45deg);
+      opacity: 0.8;
+      animation: float 8s infinite ease-in-out;
+    }
+
+    .heart::before,
+    .heart::after {
+      content: '';
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      background: var(--pink);
+      border-radius: 50%;
+      top: -7px;
+      left: 0;
+    }
+
+    .heart::after {
+      left: 7px;
+    }
+
+    @keyframes float {
+      0% { transform: translateY(0) rotate(45deg); opacity: 0.8; }
+      50% { transform: translateY(-24px) rotate(45deg); opacity: 1; }
+      100% { transform: translateY(0) rotate(45deg); opacity: 0.8; }
+    }
+
+    .container {
+      position: relative;
+      width: min(520px, calc(100% - 24px));
+      padding: 28px;
+      border-radius: 32px;
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 22px 60px var(--shadow);
+      backdrop-filter: blur(10px);
+      text-align: center;
+    }
+
+    .title {
+      margin: 0;
+      font-size: clamp(2rem, 3vw, 3.2rem);
+      letter-spacing: -0.04em;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      margin: 0;
+      font-size: 1rem;
+      color: #7d5c7b;
+      margin-bottom: 24px;
+    }
+
+    .question {
+      margin: 0 auto 30px;
+      max-width: 420px;
+      font-size: 1.2rem;
+      line-height: 1.6;
+    }
+
+    .love-meter {
+      height: 14px;
+      width: 100%;
+      background: #f4d5e5;
+      border-radius: 999px;
+      overflow: hidden;
+      margin: 0 auto 24px;
+      box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+
+    .love-meter-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #ff7aa8, #ff4181);
+      transition: width 0.5s ease;
+    }
+
+    .answers {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(100px, 1fr));
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .answer-btn {
+      padding: 14px 18px;
+      border: none;
+      border-radius: 18px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+      box-shadow: 0 10px 18px rgba(255, 92, 138, 0.16);
+      color: white;
+    }
+
+    .answer-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .yes {
+      background: linear-gradient(135deg, #ff7373, #ff416c);
+    }
+
+    .no {
+      background: linear-gradient(135deg, #7460f8, #a44dfa);
+      position: relative;
+    }
+
+    .maybe {
+      background: linear-gradient(135deg, #ffb347, #ffcc33);
+      color: #4b2c23;
+    }
+
+    .reset-btn {
+      margin-top: 16px;
+      border: 2px solid #ff7aa8;
+      background: transparent;
+      color: #ff5c8a;
+      padding: 12px 22px;
+      border-radius: 999px;
+      cursor: pointer;
+      font-weight: 700;
+      transition: background 0.25s ease, color 0.25s ease;
+    }
+
+    .reset-btn:hover {
+      background: #ff5c8a;
+      color: #ffffff;
+    }
+
+    .feedback {
+      min-height: 66px;
+      margin-top: 16px;
+      font-size: 1rem;
+      color: #5c335c;
+      font-weight: 600;
+    }
+
+    .confetti {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+      opacity: 0;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="title">Love Game</h1>
+    <p class="subtitle">Tap the answer, earn hearts, and see how strong your love meter becomes.</p>
+
+    <div class="love-meter" aria-label="Love meter">
+      <div class="love-meter-fill" id="loveMeter"></div>
+    </div>
+
+    <p class="question" id="questionText">Do you love me?</p>
+
+    <div class="answers">
+      <button class="answer-btn yes" id="yesBtn">YES</button>
+      <button class="answer-btn no" id="noBtn">NO</button>
+      <button class="answer-btn maybe" id="maybeBtn">MAYBE</button>
+    </div>
+
+    <div class="feedback" id="feedbackText">Choose an answer and let the game begin.</div>
+    <button class="reset-btn" id="resetBtn">Reset Game</button>
+  </div>
+
+  <script>
+    const questions = [
+      {
+        text: 'Do you love me?',
+        responses: {
+          yes: 'Yes! My heart beats for you ❤️',
+          no: 'Oh no, the NO button is shy and will run away...',
+          maybe: 'A little mystery keeps things exciting! 🌟'
+        }
+      },
+      {
+        text: 'Will you be my special one?',
+        responses: {
+          yes: 'That makes my heart sparkle! 💖',
+          no: 'It looks like the heart is hiding again...',
+          maybe: 'A romantic maybe is still a sweet yes in disguise. 💌'
+        }
+      },
+      {
+        text: 'Shall we make a love story together?',
+        responses: {
+          yes: 'Yes! A story full of hearts begins now! ✨',
+          no: 'The NO button is nervous, but love can still win.',
+          maybe: 'Maybe means there is hope for a beautiful ending. 🌹'
+        }
+      }
+    ];
+
+    const loveMeter = document.getElementById('loveMeter');
+    const questionText = document.getElementById('questionText');
+    const feedbackText = document.getElementById('feedbackText');
+    const yesBtn = document.getElementById('yesBtn');
+    const noBtn = document.getElementById('noBtn');
+    const maybeBtn = document.getElementById('maybeBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    let currentQuestion = 0;
+    let loveScore = 0;
+
+    function updateQuestion() {
+      const question = questions[currentQuestion];
+      questionText.textContent = question.text;
+      feedbackText.textContent = 'Choose an answer and let the game continue.';
+      resetButtonPosition();
+    }
+
+    function showFeedback(type) {
+      const response = questions[currentQuestion].responses[type];
+      feedbackText.textContent = response;
+      if (type === 'yes') {
+        loveScore += 34;
+        showConfetti();
+      } else if (type === 'maybe') {
+        loveScore += 12;
+      } else {
+        loveScore = Math.max(0, loveScore - 8);
+      }
+      loveScore = Math.min(100, loveScore);
+      loveMeter.style.width = loveScore + '%';
+      currentQuestion = (currentQuestion + 1) % questions.length;
+      setTimeout(updateQuestion, 1200);
+    }
+
+    function resetButtonPosition() {
+      noBtn.style.left = '';
+      noBtn.style.top = '';
+    }
+
+    function randomNoPosition() {
+      const containerRect = document.body.getBoundingClientRect();
+      const offsetX = Math.random() * (containerRect.width - 140);
+      const offsetY = Math.random() * (containerRect.height - 140);
+      noBtn.style.left = `${offsetX}px`;
+      noBtn.style.top = `${offsetY}px`;
+    }
+
+    function showConfetti() {
+      for (let i = 0; i < 18; i += 1) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        confetti.style.background = ['#ff5c8a', '#ffcc56', '#8d6bff', '#ff7aa8'][Math.floor(Math.random() * 4)];
+        confetti.style.left = `${50 + Math.random() * 180}px`;
+        confetti.style.top = '40px';
+        confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+        document.body.appendChild(confetti);
+
+        const duration = 1200 + Math.random() * 800;
+        confetti.animate([
+          { opacity: 1, transform: `translateY(0px) rotate(${Math.random() * 360}deg)` },
+          { opacity: 0, transform: `translateY(-120px) rotate(${Math.random() * 720}deg)` }
+        ], {
+          duration,
+          easing: 'ease-out'
+        });
+
+        setTimeout(() => confetti.remove(), duration);
+      }
+    }
+
+    yesBtn.addEventListener('click', () => showFeedback('yes'));
+    maybeBtn.addEventListener('click', () => showFeedback('maybe'));
+    noBtn.addEventListener('click', () => showFeedback('no'));
+
+    noBtn.addEventListener('mouseover', () => {
+      randomNoPosition();
+    });
+
+    resetBtn.addEventListener('click', () => {
+      currentQuestion = 0;
+      loveScore = 0;
+      loveMeter.style.width = '0%';
+      feedbackText.textContent = 'Game reset. Start again with your biggest yes!';
+      updateQuestion();
+    });
+
+    updateQuestion();
+  </script>
+</body>
+</html>
